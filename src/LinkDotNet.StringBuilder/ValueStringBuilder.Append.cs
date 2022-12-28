@@ -16,7 +16,7 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="value">Formattable span to add.</param>
     /// <param name="format">Optional formatter. If not provided the default of the given instance is taken.</param>
-    /// <param name="bufferSize">Size of the buffer allocated on the stack.</param>
+    /// <param name="bufferSize">Size of the _buffer allocated on the stack.</param>
     /// <typeparam name="T">Any <see cref="ISpanFormattable"/>.</typeparam>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Append<T>(T value, ReadOnlySpan<char> format = default, int bufferSize = 36)
@@ -29,21 +29,21 @@ public ref partial struct ValueStringBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Append(scoped ReadOnlySpan<char> str)
     {
-        var newSize = str.Length + bufferPosition;
-        if (newSize > buffer.Length)
+        var newSize = str.Length + _bufferPosition;
+        if (newSize > _buffer.Length)
         {
             Grow(newSize * 2);
         }
 
-        str.CopyTo(buffer[bufferPosition..]);
-        bufferPosition += str.Length;
+        str.CopyTo(_buffer[_bufferPosition..]);
+        _bufferPosition += str.Length;
     }
 
     /// <summary>
-    /// Appends a character buffer to this builder.
+    /// Appends a character _buffer to this builder.
     /// </summary>
-    /// <param name="value">The pointer to the start of the buffer.</param>
-    /// <param name="length">The number of characters in the buffer.</param>
+    /// <param name="value">The pointer to the start of the _buffer.</param>
+    /// <param name="length">The number of characters in the _buffer.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe void Append(char* value, int length)
     {
@@ -77,18 +77,18 @@ public ref partial struct ValueStringBuilder
         Span<char> tempBuffer = stackalloc char[bufferSize];
         if (value.TryFormat(tempBuffer, out var written, format, null))
         {
-            var newSize = written + bufferPosition;
-            if (newSize >= buffer.Length)
+            var newSize = written + _bufferPosition;
+            if (newSize >= _buffer.Length)
             {
                 Grow();
             }
 
-            tempBuffer[..written].CopyTo(buffer[bufferPosition..]);
-            bufferPosition = newSize;
+            tempBuffer[..written].CopyTo(_buffer[_bufferPosition..]);
+            _bufferPosition = newSize;
         }
         else
         {
-            throw new InvalidOperationException($"Could not insert {value} into given buffer. Is the buffer (size: {bufferSize}) large enough?");
+            throw new InvalidOperationException($"Could not insert {value} into given _buffer. Is the _buffer (size: {bufferSize}) large enough?");
         }
     }
 }

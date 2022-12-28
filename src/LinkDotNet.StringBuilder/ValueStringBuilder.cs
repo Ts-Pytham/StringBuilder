@@ -15,9 +15,9 @@ namespace LinkDotNet.StringBuilder;
 [SkipLocalsInit]
 public ref partial struct ValueStringBuilder
 {
-    private int bufferPosition;
-    private Span<char> buffer;
-    private char[]? arrayFromPool;
+    private int _bufferPosition;
+    private Span<char> _buffer;
+    private char[]? _arrayFromPool;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ValueStringBuilder"/> struct.
@@ -25,22 +25,22 @@ public ref partial struct ValueStringBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueStringBuilder()
     {
-        bufferPosition = 0;
-        buffer = default;
-        arrayFromPool = null;
+        _bufferPosition = 0;
+        _buffer = default;
+        _arrayFromPool = null;
         Grow(32);
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ValueStringBuilder"/> struct.
     /// </summary>
-    /// <param name="initialBuffer">Initial buffer for the string builder to begin with.</param>
+    /// <param name="initialBuffer">Initial _buffer for the string builder to begin with.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueStringBuilder(Span<char> initialBuffer)
     {
-        bufferPosition = 0;
-        buffer = initialBuffer;
-        arrayFromPool = null;
+        _bufferPosition = 0;
+        _buffer = initialBuffer;
+        _arrayFromPool = null;
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public ref partial struct ValueStringBuilder
     /// <value>
     /// The current length of the represented string.
     /// </value>
-    public readonly int Length => bufferPosition;
+    public readonly int Length => _bufferPosition;
 
     /// <summary>
     /// Gets the current maximum capacity before growing the array.
@@ -69,18 +69,18 @@ public ref partial struct ValueStringBuilder
     /// <value>
     /// The current maximum capacity before growing the array.
     /// </value>
-    public readonly int Capacity => buffer.Length;
+    public readonly int Capacity => _buffer.Length;
 
     /// <summary>
     /// Returns the character at the given index or throws an <see cref="IndexOutOfRangeException"/> if the index is bigger than the string.
     /// </summary>
     /// <param name="index">Index position, which should be retrieved.</param>
-    public readonly ref char this[int index] => ref buffer[index];
+    public readonly ref char this[int index] => ref _buffer[index];
 
     /// <summary>
     /// Defines the implicit conversion of a <see cref="string"/> to <see cref="ValueStringBuilder"/>.
     /// </summary>
-    /// <param name="fromString">The string as initial buffer.</param>
+    /// <param name="fromString">The string as initial _buffer.</param>
 #pragma warning disable CA2225
     public static implicit operator ValueStringBuilder(string fromString) => new(fromString.AsSpan());
 #pragma warning restore CA2225
@@ -88,7 +88,7 @@ public ref partial struct ValueStringBuilder
     /// <summary>
     /// Defines the implicit conversion of a <see cref="ReadOnlySpan{Char}"/> to <see cref="ValueStringBuilder"/>.
     /// </summary>
-    /// <param name="fromString">The string as initial buffer.</param>
+    /// <param name="fromString">The string as initial _buffer.</param>
 #pragma warning disable CA2225
     public static implicit operator ValueStringBuilder(ReadOnlySpan<char> fromString) => new(fromString);
 #pragma warning restore CA2225
@@ -98,7 +98,7 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <returns>The <see cref="string"/> instance.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly override string ToString() => new(buffer[..bufferPosition]);
+    public readonly override string ToString() => new(_buffer[.._bufferPosition]);
 
     /// <summary>
     /// Creates a <see cref="string"/> instance from that builder.
@@ -107,14 +107,14 @@ public ref partial struct ValueStringBuilder
     /// <param name="length">The length of the substring.</param>
     /// <returns>The <see cref="string"/> instance.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly string ToString(int startIndex, int length) => new(buffer[startIndex..(startIndex + length)]);
+    public readonly string ToString(int startIndex, int length) => new(_buffer[startIndex..(startIndex + length)]);
 
     /// <summary>
     /// Returns the string as an <see cref="ReadOnlySpan{T}"/>.
     /// </summary>
     /// <returns>The filled array as <see cref="ReadOnlySpan{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly ReadOnlySpan<char> AsSpan() => buffer[..bufferPosition];
+    public readonly ReadOnlySpan<char> AsSpan() => _buffer[.._bufferPosition];
 
     /// <summary>
     /// Gets a pinnable reference to the represented string from this builder.
@@ -126,11 +126,11 @@ public ref partial struct ValueStringBuilder
     /// <code>
     /// using var stringBuilder = new ValueStringBuilder();
     /// stringBuilder.Append("Hello World");
-    /// fixed (var* buffer = stringBuilder) { ... }
+    /// fixed (var* _buffer = stringBuilder) { ... }
     /// </code>
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly ref char GetPinnableReference() => ref MemoryMarshal.GetReference(buffer);
+    public readonly ref char GetPinnableReference() => ref MemoryMarshal.GetReference(_buffer);
 
     /// <summary>
     /// Tries to copy the represented string into the given <see cref="Span{T}"/>.
@@ -138,16 +138,16 @@ public ref partial struct ValueStringBuilder
     /// <param name="destination">The destination where the internal string is copied into.</param>
     /// <returns>True, if the copy was successful, otherwise false.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly bool TryCopyTo(Span<char> destination) => buffer[..bufferPosition].TryCopyTo(destination);
+    public readonly bool TryCopyTo(Span<char> destination) => _buffer[.._bufferPosition].TryCopyTo(destination);
 
     /// <summary>
     /// Clears the internal representation of the string.
     /// </summary>
     /// <remarks>
-    /// This will not enforce some re-allocation or shrinking of the internal buffer. The size stays the same.
+    /// This will not enforce some re-allocation or shrinking of the internal _buffer. The size stays the same.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Clear() => bufferPosition = 0;
+    public void Clear() => _bufferPosition = 0;
 
     /// <summary>
     /// Ensures that the builder has at least <paramref name="newCapacity"/> amount of capacity.
@@ -202,8 +202,8 @@ public ref partial struct ValueStringBuilder
         }
 
         var beginIndex = startIndex + length;
-        buffer[beginIndex..bufferPosition].CopyTo(buffer[startIndex..]);
-        bufferPosition -= length;
+        _buffer[beginIndex.._bufferPosition].CopyTo(_buffer[startIndex..]);
+        _bufferPosition -= length;
     }
 
     /// <summary>
@@ -228,7 +228,7 @@ public ref partial struct ValueStringBuilder
             throw new ArgumentOutOfRangeException(nameof(startIndex), "Start index can't be smaller than 0.");
         }
 
-        return word.IsEmpty ? 0 : NaiveSearch.FindFirst(buffer[startIndex..bufferPosition], word);
+        return word.IsEmpty ? 0 : NaiveSearch.FindFirst(_buffer[startIndex.._bufferPosition], word);
     }
 
     /// <summary>
@@ -253,7 +253,7 @@ public ref partial struct ValueStringBuilder
             throw new ArgumentOutOfRangeException(nameof(startIndex), "Start index can't be smaller than 0.");
         }
 
-        return word.IsEmpty ? 0 : NaiveSearch.FindLast(buffer[startIndex..bufferPosition], word);
+        return word.IsEmpty ? 0 : NaiveSearch.FindLast(_buffer[startIndex.._bufferPosition], word);
     }
 
     /// <summary>
@@ -276,27 +276,27 @@ public ref partial struct ValueStringBuilder
     public readonly bool Equals(ReadOnlySpan<char> span) => span.SequenceEqual(AsSpan());
 
     /// <summary>
-    /// Disposes the instance and returns rented buffer from an array pool if needed.
+    /// Disposes the instance and returns rented _buffer from an array pool if needed.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly void Dispose()
     {
-        if (arrayFromPool != null)
+        if (_arrayFromPool != null)
         {
-            ArrayPool<char>.Shared.Return(arrayFromPool);
+            ArrayPool<char>.Shared.Return(_arrayFromPool);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void Grow(int capacity = 0)
     {
-        var currentSize = buffer.Length;
+        var currentSize = _buffer.Length;
 
         var newSize = capacity > currentSize ? capacity : currentSize * 2;
         var rented = ArrayPool<char>.Shared.Rent(newSize);
-        buffer.CopyTo(rented);
-        var oldBufferFromPool = arrayFromPool;
-        buffer = arrayFromPool = rented;
+        _buffer.CopyTo(rented);
+        var oldBufferFromPool = _arrayFromPool;
+        _buffer = _arrayFromPool = rented;
 
         if (oldBufferFromPool != null)
         {

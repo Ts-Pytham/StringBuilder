@@ -27,16 +27,16 @@ public ref partial struct ValueStringBuilder
             throw new ArgumentOutOfRangeException(nameof(startIndex), "Start index can't be smaller than 0.");
         }
 
-        if (count > bufferPosition)
+        if (count > _bufferPosition)
         {
-            throw new ArgumentOutOfRangeException(nameof(count), $"Count: {count} is bigger than the current size {bufferPosition}.");
+            throw new ArgumentOutOfRangeException(nameof(count), $"Count: {count} is bigger than the current size {_bufferPosition}.");
         }
 
         for (var i = startIndex; i < startIndex + count; i++)
         {
-            if (buffer[i] == oldValue)
+            if (_buffer[i] == oldValue)
             {
-                buffer[i] = newValue;
+                _buffer[i] = newValue;
             }
         }
     }
@@ -112,7 +112,7 @@ public ref partial struct ValueStringBuilder
     public void Replace(scoped ReadOnlySpan<char> oldValue, scoped ReadOnlySpan<char> newValue, int startIndex, int count)
     {
         var length = startIndex + count;
-        var slice = buffer[startIndex..length];
+        var slice = _buffer[startIndex..length];
 
         if (oldValue.SequenceEqual(newValue))
         {
@@ -140,14 +140,14 @@ public ref partial struct ValueStringBuilder
             // We can insert the slice and remove the overhead
             if (delta < 0)
             {
-                newValue.CopyTo(buffer[index..]);
+                newValue.CopyTo(_buffer[index..]);
                 Remove(index + newValue.Length, -delta);
             }
 
             // Same length -> We can just replace the memory slice
             else if (delta == 0)
             {
-                newValue.CopyTo(buffer[index..]);
+                newValue.CopyTo(_buffer[index..]);
             }
 
             // newValue is larger than the old value
@@ -155,7 +155,7 @@ public ref partial struct ValueStringBuilder
             // and insert afterwards the rest
             else
             {
-                newValue[..oldValue.Length].CopyTo(buffer[index..]);
+                newValue[..oldValue.Length].CopyTo(_buffer[index..]);
                 Insert(index + oldValue.Length, newValue[oldValue.Length..]);
             }
         }

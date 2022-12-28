@@ -18,7 +18,7 @@ public ref partial struct ValueStringBuilder
     /// <param name="index">Index where <paramref name="value"/> should be inserted.</param>
     /// <param name="value">Formattable span to insert into this builder.</param>
     /// <param name="format">Optional formatter. If not provided the default of the given instance is taken.</param>
-    /// <param name="bufferSize">Size of the buffer allocated on the stack.</param>
+    /// <param name="bufferSize">Size of the _buffer allocated on the stack.</param>
     /// <typeparam name="T">Any <see cref="ISpanFormattable"/>.</typeparam>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Insert<T>(int index, T value, ReadOnlySpan<char> format = default, int bufferSize = 36)
@@ -37,24 +37,24 @@ public ref partial struct ValueStringBuilder
             throw new ArgumentOutOfRangeException(nameof(index), "The given index can't be negative.");
         }
 
-        if (index > bufferPosition)
+        if (index > _bufferPosition)
         {
             throw new ArgumentOutOfRangeException(nameof(index), "The given index can't be bigger than the string itself.");
         }
 
-        bufferPosition += value.Length;
-        if (bufferPosition > buffer.Length)
+        _bufferPosition += value.Length;
+        if (_bufferPosition > _buffer.Length)
         {
-            Grow(bufferPosition * 2);
+            Grow(_bufferPosition * 2);
         }
 
         // Move Slice at beginning index
-        var oldPosition = bufferPosition - value.Length;
+        var oldPosition = _bufferPosition - value.Length;
         var shift = index + value.Length;
-        buffer[index..oldPosition].CopyTo(buffer[shift..bufferPosition]);
+        _buffer[index..oldPosition].CopyTo(_buffer[shift.._bufferPosition]);
 
         // Add new word
-        value.CopyTo(buffer[index..shift]);
+        value.CopyTo(_buffer[index..shift]);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -66,7 +66,7 @@ public ref partial struct ValueStringBuilder
             throw new ArgumentOutOfRangeException(nameof(index), "The given index can't be negative.");
         }
 
-        if (index > bufferPosition)
+        if (index > _bufferPosition)
         {
             throw new ArgumentOutOfRangeException(nameof(index), "The given index can't be bigger than the string itself.");
         }
@@ -74,23 +74,23 @@ public ref partial struct ValueStringBuilder
         Span<char> tempBuffer = stackalloc char[bufferSize];
         if (value.TryFormat(tempBuffer, out var written, format, null))
         {
-            bufferPosition += written;
-            if (bufferPosition > buffer.Length)
+            _bufferPosition += written;
+            if (_bufferPosition > _buffer.Length)
             {
-                Grow(bufferPosition * 2);
+                Grow(_bufferPosition * 2);
             }
 
             // Move Slice at beginning index
-            var oldPosition = bufferPosition - written;
+            var oldPosition = _bufferPosition - written;
             var shift = index + written;
-            buffer[index..oldPosition].CopyTo(buffer[shift..bufferPosition]);
+            _buffer[index..oldPosition].CopyTo(_buffer[shift.._bufferPosition]);
 
             // Add new word
-            tempBuffer[..written].CopyTo(buffer[index..shift]);
+            tempBuffer[..written].CopyTo(_buffer[index..shift]);
         }
         else
         {
-            throw new InvalidOperationException($"Could not insert {value} into given buffer. Is the buffer (size: {bufferSize}) large enough?");
+            throw new InvalidOperationException($"Could not insert {value} into given _buffer. Is the _buffer (size: {bufferSize}) large enough?");
         }
     }
 }
